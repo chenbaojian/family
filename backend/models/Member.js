@@ -28,7 +28,7 @@ async function findById(id) {
   return rows[0];
 }
 
-// 获取所有成员
+// 获取成员列表（支持分页）
 async function findAll(options = {}) {
   let sql = 'SELECT * FROM members WHERE 1=1';
   const values = [];
@@ -56,10 +56,24 @@ async function findAll(options = {}) {
     values.push(`%${options.search}%`);
   }
   
-  sql += ' ORDER BY generation, order_in_generation, birth_date';
+  // 统计总数
+  const countSql = sql.replace('SELECT *', 'SELECT COUNT(*) as total');
+  const [countResult] = await pool.execute(countSql, values.slice());
+  const total = countResult[0].total;
+  
+  // 默认按创建时间逆序排序
+  sql += ' ORDER BY created_at DESC';
+  
+  // 分页
+  const page = Math.max(1, parseInt(options.page) || 1);
+  const pageSize = Math.max(1, parseInt(options.pageSize) || 10);
+  const offset = (page - 1) * pageSize;
+  
+  sql += ' LIMIT ? OFFSET ?';
+  values.push(pageSize, offset);
   
   const [rows] = await pool.execute(sql, values);
-  return rows;
+  return { rows, total, page, pageSize };
 }
 
 // 更新成员信息

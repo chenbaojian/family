@@ -8,16 +8,25 @@ export const useMemberStore = defineStore('member', {
     currentMember: null,
     familyTree: [],
     statistics: null,
-    loading: false
+    loading: false,
+    pagination: {
+      total: 0,
+      page: 1,
+      pageSize: 10,
+      totalPages: 0
+    }
   }),
   
   actions: {
-    async fetchMembers(params) {
+    async fetchMembers(params = {}) {
       this.loading = true
       try {
         const res = await getMembers(params)
         if (res.success) {
           this.members = res.data
+          if (res.pagination) {
+            this.pagination = res.pagination
+          }
         }
         return res
       } finally {

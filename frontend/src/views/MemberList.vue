@@ -13,22 +13,22 @@
       
       <!-- 筛选条件 -->
       <div class="filter-bar">
-        <el-select v-model="filters.generation" placeholder="代数" clearable style="width: 100px">
+        <el-select v-model="filters.generation" placeholder="代数" clearable style="width: 100px" @change="handleFilterChange">
           <el-option v-for="i in maxGeneration" :key="i" :label="`第${i}代`" :value="i" />
         </el-select>
-        <el-select v-model="filters.gender" placeholder="性别" clearable style="width: 80px">
+        <el-select v-model="filters.gender" placeholder="性别" clearable style="width: 80px" @change="handleFilterChange">
           <el-option label="男" value="male" />
           <el-option label="女" value="female" />
         </el-select>
-        <el-select v-model="filters.isAlive" placeholder="状态" clearable style="width: 80px">
+        <el-select v-model="filters.isAlive" placeholder="状态" clearable style="width: 80px" @change="handleFilterChange">
           <el-option label="在世" value="true" />
           <el-option label="已故" value="false" />
         </el-select>
-        <el-input v-model="filters.search" placeholder="搜索姓名" clearable style="width: 140px" />
+        <el-input v-model="filters.search" placeholder="搜索姓名" clearable style="width: 140px" @clear="handleFilterChange" @keyup.enter="handleFilterChange" />
       </div>
       
       <!-- PC端：表格 -->
-      <el-table :data="filteredMembers" v-loading="loading" stripe class="pc-table" style="width: 100%">
+      <el-table :data="memberStore.members" v-loading="loading" stripe class="pc-table" style="width: 100%">
         <el-table-column prop="name" label="姓名" width="110" />
         <el-table-column prop="gender" label="性别" width="80">
           <template #default="{ row }">
@@ -67,10 +67,10 @@
         <div v-if="loading" style="text-align:center;padding:30px;">
           <el-icon class="is-loading" :size="24"><Loading /></el-icon>
         </div>
-        <div v-else-if="filteredMembers.length === 0" style="text-align:center;padding:30px;color:#909399;">
+        <div v-else-if="memberStore.members.length === 0" style="text-align:center;padding:30px;color:#909399;">
           暂无数据
         </div>
-        <div v-else class="member-card" v-for="member in filteredMembers" :key="member.id" @click="viewDetail(member)">
+        <div v-else class="member-card" v-for="member in memberStore.members" :key="member.id" @click="viewDetail(member)">
           <div class="card-top">
             <div class="card-name">
               <span class="name">{{ member.name }}</span>
@@ -91,12 +91,25 @@
           </div>
         </div>
       </div>
+
+      <!-- 分页 -->
+      <div class="pagination-wrap" v-if="memberStore.pagination.total > 0">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="currentPageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="memberStore.pagination.total"
+          layout="total, sizes, prev, pager, next"
+          @size-change="handleSizeChange"
+          @current-change="handlePageChange"
+        />
+      </div>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
@@ -128,21 +141,10 @@ const filters = reactive({
   search: ''
 })
 
-const maxGeneration = computed(() => {
-  const gens = memberStore.members.map(m => m.generation)
-  return Math.max(...gens, 0)
-})
+const currentPage = ref(1)
+const currentPageSize = ref(10)
 
-const filteredMembers = computed(() => {
-  return memberStore.members.filter(m => {
-    if (filters.generation && m.generation !== filters.generation) return false
-    if (filters.gender && m.gender !== filters.gender) return false
-    if (filters.isAlive === 'true' && m.death_date) return false
-    if (filters.isAlive === 'false' && !m.death_date) return false
-    if (filters.search && !m.name.includes(filters.search)) return false
-    return true
-  })
-})
+const maxGeneration = 20
 
 onMounted(async () => {
   if (route.query.search) {
@@ -153,13 +155,37 @@ onMounted(async () => {
 
 async function loadMembers() {
   loading.value = true
-  await memberStore.fetchMembers()
+  const params = {
+    page: currentPage.value,
+    pageSize: currentPageSize.value
+  }
+  if (filters.generation) params.generation = filters.generation
+  if (filters.gender) params.gender = filters.gender
+  if (filters.isAlive) params.isAlive = filters.isAlive
+  if (filters.search) params.search = filters.search
+
+  await memberStore.fetchMembers(params)
   loading.value = false
+}
+
+function handleFilterChange() {
+  currentPage.value = 1
+  loadMembers()
+}
+
+function handlePageChange(page) {
+  currentPage.value = page
+  loadMembers()
+}
+
+function handleSizeChange(size) {
+  currentPageSize.value = size
+  currentPage.value = 1
+  loadMembers()
 }
 
 function formatDate(dateStr) {
   if (!dateStr) return ''
-  // 只取 YYYY-MM-DD 部分，去掉可能的时间部分
   return dateStr.split('T')[0].split(' ')[0].substring(0, 10)
 }
 
@@ -209,6 +235,12 @@ async function deleteMember(member) {
   gap: 10px;
   margin-bottom: 16px;
   flex-wrap: wrap;
+}
+
+.pagination-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
 }
 
 /* PC端表格默认显示，手机端隐藏 */
@@ -294,6 +326,15 @@ async function deleteMember(member) {
     display: flex;
     gap: 8px;
     margin-top: 10px;
+  }
+
+  .pagination-wrap :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .pagination-wrap :deep(.el-pagination__sizes) {
+    display: none;
   }
 }
 </style>

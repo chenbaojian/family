@@ -104,7 +104,8 @@ async function getFamilyTree(req, res) {
 async function getGenerationMembers(req, res) {
   try {
     const { gen } = req.params;
-    const members = await Member.findAll({ generation: parseInt(gen) });
+    const result = await Member.findAll({ generation: parseInt(gen), page: 1, pageSize: 10000 });
+    const members = result.rows;
     
     res.json({
       success: true,
@@ -149,7 +150,8 @@ async function searchMembers(req, res) {
       });
     }
     
-    const members = await Member.findAll({ search: q });
+    const result = await Member.findAll({ search: q, page: 1, pageSize: 10000 });
+    const members = result.rows;
     
     res.json({
       success: true,

@@ -16,22 +16,30 @@ function formatDate(dateStr) {
   return `${year}-${month}-${day}`;
 }
 
-// 获取成员列表
+// 获取成员列表（支持分页）
 async function getMembers(req, res) {
   try {
-    const { generation, gender, isAlive, search } = req.query;
+    const { generation, gender, isAlive, search, page, pageSize } = req.query;
     
     const options = {};
     if (generation) options.generation = parseInt(generation);
     if (gender) options.gender = gender;
     if (isAlive !== undefined) options.isAlive = isAlive === 'true';
     if (search) options.search = search;
+    if (page) options.page = parseInt(page);
+    if (pageSize) options.pageSize = parseInt(pageSize);
     
-    const members = await Member.findAll(options);
+    const result = await Member.findAll(options);
     
     res.json({
       success: true,
-      data: members
+      data: result.rows,
+      pagination: {
+        total: result.total,
+        page: result.page,
+        pageSize: result.pageSize,
+        totalPages: Math.ceil(result.total / result.pageSize)
+      }
     });
   } catch (error) {
     console.error('获取成员列表错误:', error);
@@ -272,7 +280,8 @@ async function getRelatives(req, res) {
     
     // 获取兄弟姐妹
     if (member.father_id || member.mother_id) {
-      const allChildren = await Member.findAll();
+      const allChildrenResult = await Member.findAll({ page: 1, pageSize: 10000 });
+      const allChildren = allChildrenResult.rows;
       relatives.siblings = allChildren.filter(m => 
         m.id !== id && 
         ((member.father_id && m.father_id === member.father_id) ||

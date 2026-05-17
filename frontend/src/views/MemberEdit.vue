@@ -197,7 +197,7 @@ const maleMembers = computed(() => memberStore.members.filter(m => m.gender === 
 const femaleMembers = computed(() => memberStore.members.filter(m => m.gender === 'female'))
 
 onMounted(async () => {
-  await memberStore.fetchMembers()
+  await memberStore.fetchMembers({ page: 1, pageSize: 10000 })
   if (isEdit.value) {
     await loadMember()
   }
