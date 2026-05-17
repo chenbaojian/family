@@ -18,33 +18,8 @@
       </template>
 
       <div class="detail-content" v-if="member">
-        <!-- 顶部区域：基本信息 + 右上角头像 -->
         <div class="top-section">
-          <!-- 左侧基本信息 -->
-          <div class="info-main">
-            <div class="name-header">
-              <el-avatar :size="40" icon="UserFilled" class="name-avatar" />
-              <h2>{{ member.name }}</h2>
-            </div>
-            <p class="generation-tag">第 {{ member.generation }} 代</p>
-            <el-descriptions :column="2" border>
-              <el-descriptions-item label="性别">{{ member.gender === 'male' ? '男' : '女' }}</el-descriptions-item>
-              <el-descriptions-item label="状态">
-                <el-tag :type="member.death_date ? 'info' : 'success'">{{ member.death_date ? '已故' : '在世' }}</el-tag>
-              </el-descriptions-item>
-              <el-descriptions-item label="出生日期">{{ member.birth_date }}</el-descriptions-item>
-              <el-descriptions-item label="离世日期">{{ member.death_date || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="出生地点">{{ member.birth_place || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="居住地点">{{ member.residence || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="配偶">{{ member.spouse_name || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="学历">{{ member.education || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="职业">{{ member.occupation || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="手机号">{{ member.phone || '-' }}</el-descriptions-item>
-              <el-descriptions-item label="邮箱">{{ member.email || '-' }}</el-descriptions-item>
-            </el-descriptions>
-          </div>
-          
-          <!-- 右上角头像区域 - 矩形卡片形式 -->
+          <!-- 照片区域（手机端置顶居中） -->
           <div class="photo-section">
             <div class="photo-card" @click="handlePhotoClick" v-if="authStore.isEditor">
               <div class="photo-image">
@@ -70,6 +45,30 @@
               style="display: none" 
               @change="handleFileChange"
             />
+          </div>
+
+          <!-- 基本信息 -->
+          <div class="info-main">
+            <div class="name-header">
+              <el-avatar :size="40" icon="UserFilled" class="name-avatar" />
+              <h2>{{ member.name }}</h2>
+            </div>
+            <p class="generation-tag">第 {{ member.generation }} 代</p>
+            <el-descriptions :column="descColumn" border>
+              <el-descriptions-item label="性别">{{ member.gender === 'male' ? '男' : '女' }}</el-descriptions-item>
+              <el-descriptions-item label="状态">
+                <el-tag :type="member.death_date ? 'info' : 'success'">{{ member.death_date ? '已故' : '在世' }}</el-tag>
+              </el-descriptions-item>
+              <el-descriptions-item label="出生日期">{{ member.birth_date }}</el-descriptions-item>
+              <el-descriptions-item label="离世日期">{{ member.death_date || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="出生地点">{{ member.birth_place || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="居住地点">{{ member.residence || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="配偶">{{ member.spouse_name || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="学历">{{ member.education || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="职业">{{ member.occupation || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="手机号">{{ member.phone || '-' }}</el-descriptions-item>
+              <el-descriptions-item label="邮箱">{{ member.email || '-' }}</el-descriptions-item>
+            </el-descriptions>
           </div>
         </div>
 
@@ -114,7 +113,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useAuthStore } from '@/store/auth'
@@ -131,6 +130,19 @@ const uploading = ref(false)
 const member = ref(null)
 const relatives = ref(null)
 const fileInput = ref(null)
+const isMobile = ref(false)
+const descColumn = ref(2)
+
+function checkMobile() {
+  isMobile.value = window.innerWidth <= 768
+  descColumn.value = isMobile.value ? 1 : 2
+}
+checkMobile()
+window.addEventListener('resize', checkMobile)
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 
 const photoUrl = computed(() => {
   if (member.value?.photo_url) {
@@ -383,5 +395,52 @@ async function handleFileChange(event) {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+/* 手机端响应式 */
+@media screen and (max-width: 768px) {
+  .top-section {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .photo-section {
+    align-self: center;
+  }
+
+  .photo-card {
+    width: 120px;
+    height: 150px;
+  }
+
+  .no-photo-icon {
+    font-size: 50px;
+  }
+
+  .photo-overlay span {
+    font-size: 12px;
+  }
+
+  .photo-overlay .el-icon {
+    font-size: 24px;
+  }
+
+  .info-main {
+    width: 100%;
+  }
+
+  .info-main h2 {
+    font-size: 18px;
+  }
+
+  .relatives-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .detail-content {
+    padding: 10px;
+  }
 }
 </style>

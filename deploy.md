@@ -221,27 +221,21 @@ with open('deploy/init-db/02_data.sql', 'w', encoding='utf-8') as f:
 
 ### 3.3 照片文件迁移
 
+uploads 照片通过 docker-compose 直接挂载宿主机目录（`./backend/uploads:/app/uploads`），所以只要照片文件放在项目目录下的 `backend/uploads/` 里，容器就能自动读取。路径随你项目放在哪而定。
+
 ```bash
-# 上传照片文件到服务器
+# 假设项目放在 /opt/chen-family-tree（你也可以放其他目录）
+
+# 在服务器上先创建 uploads 目录
+ssh root@你的服务器IP
+mkdir -p /opt/chen-family-tree/backend/uploads
+
+# 从本地上传照片
 scp -r /mnt/d/陈氏家族族谱_dev/backend/uploads/* \
   root@你的服务器IP:/opt/chen-family-tree/backend/uploads/
 ```
 
-照片文件不随 Docker 构建打包，而是通过 volume 挂载，所以需要在首次启动前手动放到 uploads 目录。
-
-**或者**，在 docker-compose 启动后，将照片复制到 Docker volume 中：
-
-```bash
-# 先启动服务
-cd /opt/chen-family-tree
-docker compose up -d
-
-# 找到 upload_data volume 在服务器上的路径
-docker volume inspect chen-family-tree_upload_data
-
-# 复制照片到 volume
-sudo cp backend/uploads/* /var/lib/docker/volumes/chen-family-tree_upload_data/_data/
-```
+> 关键：照片必须放在项目目录下的 `backend/uploads/` 子目录中，路径要和 docker-compose.yml 里的 `./backend/uploads` 对应。项目整体放在 `/opt/chen-family-tree` 还是 `/root/myapp` 都无所谓，只要 scp 上传的目标路径和你实际项目路径一致即可。
 
 ---
 

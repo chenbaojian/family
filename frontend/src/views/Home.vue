@@ -263,19 +263,21 @@ function handleCommand(command) {
 /* 手机端响应式 */
 @media screen and (max-width: 768px) {
   .el-header {
-    padding: 0 15px;
+    padding: 0 12px;
+    height: 50px !important;
   }
 
   .header-left h1 {
-    font-size: 16px;
+    font-size: 15px;
+    white-space: nowrap;
   }
 
   .header-center {
-    padding: 0 10px;
+    padding: 0 8px;
   }
 
   .header-center .el-input {
-    max-width: 150px;
+    max-width: 140px;
   }
 
   .username {
@@ -283,7 +285,12 @@ function handleCommand(command) {
   }
 
   .el-main {
-    padding: 15px;
+    padding: 10px;
+  }
+
+  .mobile-nav .el-menu-item {
+    font-size: 13px;
+    padding: 0 8px;
   }
 }
 </style>

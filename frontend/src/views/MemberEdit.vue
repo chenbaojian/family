@@ -10,14 +10,14 @@
         </div>
       </template>
 
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
-        <el-row :gutter="20">
-          <el-col :span="12">
+      <el-form ref="formRef" :model="form" :rules="rules" :label-width="isMobile ? '80px' : '100px'">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="姓名" prop="name">
               <el-input v-model="form.name" placeholder="请输入姓名" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="性别" prop="gender">
               <el-radio-group v-model="form.gender">
                 <el-radio value="male">男</el-radio>
@@ -27,65 +27,65 @@
           </el-col>
         </el-row>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="出生日期" prop="birth_date">
               <el-date-picker v-model="form.birth_date" type="date" placeholder="选择日期" value-format="YYYY-MM-DD" style="width: 100%" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="离世日期">
               <el-date-picker v-model="form.death_date" type="date" placeholder="选择日期（在世不填）" value-format="YYYY-MM-DD" style="width: 100%" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="代数" prop="generation">
               <el-input-number v-model="form.generation" :min="1" :max="20" style="width: 100%" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="出生地点">
               <el-input v-model="form.birth_place" placeholder="请输入出生地点" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="居住地点">
               <el-input v-model="form.residence" placeholder="请输入居住地点" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="学历">
               <el-input v-model="form.education" placeholder="请输入学历" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="手机号">
               <el-input v-model="form.phone" placeholder="请输入手机号" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="邮箱">
               <el-input v-model="form.email" placeholder="请输入邮箱" />
             </el-form-item>
           </el-col>
         </el-row>
 
-        <el-row :gutter="20">
-          <el-col :span="12">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="配偶姓名">
               <el-input v-model="form.spouse_name" placeholder="请输入配偶姓名" />
             </el-form-item>
           </el-col>
-          <el-col :span="12">
+          <el-col :span="isMobile ? 24 : 12">
             <el-form-item label="职业">
               <el-input v-model="form.occupation" placeholder="请输入职业" />
             </el-form-item>
@@ -94,22 +94,22 @@
 
         <el-divider content-position="left">亲属关系</el-divider>
 
-        <el-row :gutter="20">
-          <el-col :span="8">
+        <el-row :gutter="isMobile ? 0 : 20">
+          <el-col :span="isMobile ? 24 : 8">
             <el-form-item label="父亲">
               <el-select v-model="form.father_id" placeholder="选择父亲" clearable filterable style="width: 100%">
                 <el-option v-for="m in maleMembers" :key="m.id" :label="m.name" :value="m.id" />
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
+          <el-col :span="isMobile ? 24 : 8">
             <el-form-item label="母亲">
               <el-select v-model="form.mother_id" placeholder="选择母亲" clearable filterable style="width: 100%">
                 <el-option v-for="m in femaleMembers" :key="m.id" :label="m.name" :value="m.id" />
               </el-select>
             </el-form-item>
           </el-col>
-          <el-col :span="8">
+          <el-col :span="isMobile ? 24 : 8">
             <el-form-item label="配偶成员">
               <el-select v-model="form.spouse_id" placeholder="选择配偶" clearable filterable style="width: 100%">
                 <el-option v-for="m in allMembers" :key="m.id" :label="m.name" :value="m.id" />
@@ -140,7 +140,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useMemberStore } from '@/store/member'
@@ -151,6 +151,17 @@ const memberStore = useMemberStore()
 const formRef = ref(null)
 const loading = ref(false)
 const submitting = ref(false)
+const isMobile = ref(false)
+
+function checkMobile() {
+  isMobile.value = window.innerWidth <= 768
+}
+checkMobile()
+window.addEventListener('resize', checkMobile)
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
 
 const isEdit = computed(() => !!router.currentRoute.value.params.id)
 

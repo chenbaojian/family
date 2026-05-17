@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # MySQL 数据库
   mysql:
@@ -45,7 +43,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - upload_data:/app/uploads  # 持久化上传的照片
+      - ./backend/uploads:/app/uploads  # 持久化上传的照片，直接映射宿主机目录
     depends_on:
       mysql:
         condition: service_healthy
@@ -72,7 +70,6 @@ services:
 
 volumes:
   mysql_data:
-  upload_data:
 
 networks:
   app_network:

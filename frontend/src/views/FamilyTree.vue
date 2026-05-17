@@ -46,7 +46,7 @@
       v-model="drawerVisible"
       :title="selectedMember?.name"
       direction="rtl"
-      size="400px"
+      :size="isMobile ? '100%' : '400px'"
     >
       <div v-if="selectedMember" class="member-detail">
         <div class="avatar-section">
@@ -85,7 +85,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { Refresh, ZoomIn, ZoomOut, FullScreen } from '@element-plus/icons-vue'
 import { useMemberStore } from '@/store/member'
@@ -95,9 +95,19 @@ import TreeNode from '@/components/TreeNode.vue'
 const router = useRouter()
 const memberStore = useMemberStore()
 
+const isMobile = ref(false)
+function checkMobile() {
+  isMobile.value = window.innerWidth <= 768
+}
+checkMobile()
+window.addEventListener('resize', checkMobile)
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+
 const loading = ref(false)
 const familyTree = ref([])
-const scale = ref(1)
+const scale = ref(isMobile ? 0.5 : 1)
 const drawerVisible = ref(false)
 const selectedMember = ref(null)
 const scrollContainer = ref(null)
@@ -224,5 +234,30 @@ function viewDetail() {
   margin-top: 20px;
   display: flex;
   gap: 10px;
+}
+
+/* 手机端响应式 */
+@media screen and (max-width: 768px) {
+  .card-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .card-header span {
+    font-size: 16px;
+  }
+
+  .tree-scroll-container {
+    min-height: 300px;
+    max-height: calc(100vh - 160px);
+  }
+
+  .tree-content {
+    padding: 20px 30px;
+  }
+
+  .tree-root {
+    gap: 30px;
+  }
 }
 </style>

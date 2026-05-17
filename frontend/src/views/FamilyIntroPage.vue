@@ -159,4 +159,21 @@ async function handleSave() {
   text-indent: 2em;
   margin-bottom: 10px;
 }
+
+/* 手机端响应式 */
+@media screen and (max-width: 768px) {
+  .card-header {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .card-header span {
+    font-size: 16px;
+  }
+
+  .intro-content {
+    font-size: 14px;
+    line-height: 1.8;
+  }
+}
 </style>
