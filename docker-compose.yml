@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # MySQL 数据库
+  mysql:
+    image: mysql:8.0
+    container_name: chen_family_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: family_tree
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./deploy/init-db:/docker-entrypoint-initdb.d  # 自动执行迁移SQL
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 后端 API 服务
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chen_family_backend
+    restart: always
+    environment:
+      PORT: 3000
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${DB_ROOT_PASSWORD}
+      DB_NAME: family_tree
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: 7d
+      UPLOAD_DIR: uploads
+      MAX_FILE_SIZE: 5242880
+    ports:
+      - "3000:3000"
+    volumes:
+      - upload_data:/app/uploads  # 持久化上传的照片
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - app_network
+
+  # 前端 Nginx 服务
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: chen_family_frontend
+    restart: always
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+    networks:
+      - app_network
+
+volumes:
+  mysql_data:
+  upload_data:
+
+networks:
+  app_network:
+    driver: bridge

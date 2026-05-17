@@ -1,0 +1,5 @@
+-- 数据迁移占位文件
+-- 部署前需从本地数据库导出数据，生成此文件
+-- 导出命令: mysqldump -u root -p family_tree users members photos family_intro > 02_data.sql
+-- 注意: 此文件会在 init-db/01_schema.sql 之后执行，所以表结构已存在
+-- mysqldump 导出的 INSERT 语句会自动处理重复数据
