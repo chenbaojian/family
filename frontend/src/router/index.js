@@ -30,6 +30,12 @@ const routes = [
         meta: { title: '家族简介' }
       },
       {
+        path: 'family-catalog',
+        name: 'FamilyCatalog',
+        component: () => import('@/views/FamilyCatalogPage.vue'),
+        meta: { title: '族谱目录' }
+      },
+      {
         path: 'family-tree',
         name: 'FamilyTree',
         component: () => import('@/views/FamilyTree.vue'),

@@ -8,6 +8,7 @@ const authRoutes = require('./routes/auth');
 const memberRoutes = require('./routes/member');
 const treeRoutes = require('./routes/tree');
 const familyIntroRoutes = require('./routes/familyIntro');
+const familyCatalogRoutes = require('./routes/familyCatalog');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/members', memberRoutes);
 app.use('/api/tree', treeRoutes);
 app.use('/api/family-intro', familyIntroRoutes);
+app.use('/api/family-catalog', familyCatalogRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {

@@ -117,6 +117,23 @@ async function initDatabase() {
     `);
     console.log('✅ 家族简介表已创建');
 
+    // 创建族谱目录表
+    await connection.execute(`
+      CREATE TABLE IF NOT EXISTS family_catalog (
+        id VARCHAR(36) PRIMARY KEY,
+        title VARCHAR(200) NOT NULL,
+        description TEXT,
+        pdf_url VARCHAR(255) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_by VARCHAR(36),
+        updated_by VARCHAR(36),
+        FOREIGN KEY (created_by) REFERENCES users(id),
+        FOREIGN KEY (updated_by) REFERENCES users(id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log('✅ 族谱目录表已创建');
+
     // 插入默认家族简介
     try {
       await connection.execute(`

@@ -34,6 +34,10 @@
             <el-icon><Document /></el-icon>
             <span>家族简介</span>
           </el-menu-item>
+          <el-menu-item index="/family-catalog">
+            <el-icon><Notebook /></el-icon>
+            <span>族谱目录</span>
+          </el-menu-item>
           <el-menu-item index="/family-tree">
             <el-icon><Share /></el-icon>
             <span>家族树</span>
@@ -73,6 +77,9 @@
           <el-menu :default-active="activeMenu" router mode="horizontal">
             <el-menu-item index="/family-intro">
               <el-icon><Document /></el-icon>
+            </el-menu-item>
+            <el-menu-item index="/family-catalog">
+              <el-icon><Notebook /></el-icon>
             </el-menu-item>
             <el-menu-item index="/family-tree">
               <el-icon><Share /></el-icon>
