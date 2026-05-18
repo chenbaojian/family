@@ -4,6 +4,9 @@
     <div class="node-group">
       <!-- 主节点 -->
       <div class="node-content" :class="nodeGenderClass" @click="$emit('select', node)">
+        <span v-if="node.sibling_order_label" class="sibling-order-badge">
+          {{ node.sibling_order_label }}
+        </span>
         <el-avatar :size="50" :src="photoUrl" icon="UserFilled" />
         <div class="node-info">
           <span class="name">{{ node.name }}</span>
@@ -151,6 +154,33 @@ function updateHorizontalLine() {
 
 .node-content:hover {
   transform: translateY(-2px);
+}
+
+/* 排位标识 */
+.sibling-order-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 10px;
+  padding: 1px 4px;
+  border-radius: 4px;
+  line-height: 1.4;
+  white-space: nowrap;
+  z-index: 3;
+}
+
+/* 男性排位标识 - 蓝色系 */
+.male-node .sibling-order-badge {
+  background: rgba(64, 158, 255, 0.15);
+  color: #409eff;
+  border: 1px solid rgba(64, 158, 255, 0.3);
+}
+
+/* 女性排位标识 - 红色系 */
+.female-node .sibling-order-badge {
+  background: rgba(245, 108, 108, 0.15);
+  color: #f56c6c;
+  border: 1px solid rgba(245, 108, 108, 0.3);
 }
 
 /* 男性节点样式 - 蓝色 */

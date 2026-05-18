@@ -56,6 +56,9 @@
         <el-descriptions :column="1" border>
           <el-descriptions-item label="姓名">{{ selectedMember.name }}</el-descriptions-item>
           <el-descriptions-item label="性别">{{ selectedMember.gender === 'male' ? '男' : '女' }}</el-descriptions-item>
+          <el-descriptions-item label="排位" v-if="selectedMember.sibling_order_label">
+            {{ selectedMember.sibling_order_label }}
+          </el-descriptions-item>
           <el-descriptions-item label="代数">第{{ selectedMember.generation }}代</el-descriptions-item>
           <el-descriptions-item label="出生日期">{{ selectedMember.birth_date }}</el-descriptions-item>
           <el-descriptions-item label="离世日期" v-if="selectedMember.death_date">

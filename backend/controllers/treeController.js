@@ -1,5 +1,54 @@
 const Member = require('../models/Member');
 
+// 中文数字映射
+const CN_NUMBERS = ['长', '二', '三', '四', '五', '六', '七', '八', '九', '十',
+  '十一', '十二', '十三', '十四', '十五', '十六', '十七', '十八', '十九', '二十'];
+
+/**
+ * 生成子女排位标识
+ * @param {number} order - 排位序号（从0开始）
+ * @param {string} gender - 'male' | 'female'
+ * @returns {string} 如"长子"、"二女"
+ */
+function getSiblingOrderLabel(order, gender) {
+  const cnNum = CN_NUMBERS[order] || `${order + 1}`;
+  const suffix = gender === 'female' ? '女' : '子';
+  return `${cnNum}${suffix}`;
+}
+
+/**
+ * 为节点的children计算排位
+ * 在同一children数组内按birth_date排序后分配sibling_order和sibling_order_label
+ */
+function assignSiblingOrders(node) {
+  if (!node.children || node.children.length === 0) return;
+
+  // 按出生日期排序（有日期排前，无日期排后；同日期按order_in_generation辅助排序）
+node.children.sort((a, b) => {
+    const dateA = a.birth_date || '';
+    const dateB = b.birth_date || '';
+    if (dateA && dateB) {
+      const cmp = dateA.localeCompare(dateB);
+      if (cmp !== 0) return cmp;
+      // 同日期按order_in_generation
+      return (a.order_in_generation || 0) - (b.order_in_generation || 0);
+    }
+    if (dateA && !dateB) return -1;
+    if (!dateA && dateB) return 1;
+    // 都没日期，按order_in_generation
+    return (a.order_in_generation || 0) - (b.order_in_generation || 0);
+  });
+
+  // 分配排位
+  node.children.forEach((child, index) => {
+    child.sibling_order = index + 1;
+    child.sibling_order_label = getSiblingOrderLabel(index, child.gender);
+  });
+
+  // 递归处理后代
+  node.children.forEach(child => assignSiblingOrders(child));
+}
+
 // 获取家族树数据
 async function getFamilyTree(req, res) {
   try {
@@ -86,6 +135,9 @@ async function getFamilyTree(req, res) {
         tree.push(node);
       }
     });
+
+    // 为每个节点的子女计算排位标识
+    tree.forEach(rootNode => assignSiblingOrders(rootNode));
 
     res.json({
       success: true,
