@@ -64,13 +64,12 @@ async function findAll(options = {}) {
   // 默认按创建时间逆序排序
   sql += ' ORDER BY created_at DESC';
   
-  // 分页
+  // 分页 - 直接拼入SQL，避免prepared语句LIMIT/OFFSET类型问题
   const page = Math.max(1, parseInt(options.page) || 1);
   const pageSize = Math.max(1, parseInt(options.pageSize) || 10);
   const offset = (page - 1) * pageSize;
   
-  sql += ' LIMIT ? OFFSET ?';
-  values.push(pageSize, offset);
+  sql += ` LIMIT ${pageSize} OFFSET ${offset}`;
   
   const [rows] = await pool.execute(sql, values);
   return { rows, total, page, pageSize };

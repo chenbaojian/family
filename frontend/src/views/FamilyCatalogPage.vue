@@ -1,66 +1,57 @@
 <template>
   <div class="family-catalog-page">
-    <el-card>
-      <template #header>
-        <div class="card-header">
-          <span>族谱目录</span>
-          <el-button
-            v-if="authStore.isEditor"
-            type="primary"
-            size="small"
-            @click="showAddDialog"
-          >
-            <el-icon><Plus /></el-icon>
-            <span class="btn-text">上传族谱</span>
-          </el-button>
-        </div>
-      </template>
+    <!-- 管理栏 -->
+    <div class="catalog-toolbar" v-if="authStore.isEditor || authStore.isAdmin">
+      <el-button type="primary" size="small" @click="showAddDialog">
+        <el-icon><Plus /></el-icon>
+        <span class="btn-text">上传族谱</span>
+      </el-button>
+      <el-button size="small" @click="showEditDialog(currentCatalog)" v-if="currentCatalog && authStore.isEditor">
+        <el-icon><Edit /></el-icon>
+        <span class="btn-text">编辑</span>
+      </el-button>
+      <el-button type="danger" size="small" @click="handleDelete(currentCatalog)" v-if="currentCatalog && authStore.isAdmin">
+        <el-icon><Delete /></el-icon>
+        <span class="btn-text">删除</span>
+      </el-button>
+    </div>
 
-      <div v-if="loading" style="text-align:center;padding:30px;">
-        <el-icon class="is-loading" :size="24"><Loading /></el-icon>
-      </div>
+    <div v-if="loading" style="text-align:center;padding:30px;">
+      <el-icon class="is-loading" :size="24"><Loading /></el-icon>
+    </div>
 
-      <el-empty v-else-if="catalogs.length === 0" description="暂无族谱目录" />
+    <!-- 无数据时 -->
+    <div v-else-if="catalogs.length === 0" class="empty-state">
+      <el-empty description="暂无族谱目录" />
+      <el-button v-if="authStore.isEditor" type="primary" @click="showAddDialog">上传族谱PDF</el-button>
+    </div>
 
-      <!-- 目录列表 -->
-      <div v-else class="catalog-list">
+    <!-- 有数据时：直接展示PDF -->
+    <div v-else class="catalog-content">
+      <!-- 多个目录时显示切换栏 -->
+      <div class="catalog-tabs" v-if="catalogs.length > 1">
         <div
-          class="catalog-item"
+          class="catalog-tab"
           v-for="item in catalogs"
           :key="item.id"
-          @click="viewPdf(item)"
+          :class="{ active: currentCatalog?.id === item.id }"
+          @click="switchCatalog(item)"
         >
-          <div class="catalog-icon">
-            <el-icon :size="40" color="#409EFF"><Document /></el-icon>
-          </div>
-          <div class="catalog-info">
-            <div class="catalog-title">{{ item.title }}</div>
-            <div class="catalog-desc" v-if="item.description">{{ item.description }}</div>
-            <div class="catalog-meta">
-              <span>{{ formatDate(item.created_at) }}</span>
-            </div>
-          </div>
-          <div class="catalog-actions" v-if="authStore.isEditor || authStore.isAdmin">
-            <el-button size="small" link type="primary" @click.stop="showEditDialog(item)" v-if="authStore.isEditor">编辑</el-button>
-            <el-button size="small" link type="danger" @click.stop="handleDelete(item)" v-if="authStore.isAdmin">删除</el-button>
-          </div>
+          {{ item.title }}
         </div>
       </div>
-    </el-card>
 
-    <!-- PDF查看对话框 -->
-    <el-dialog
-      v-model="pdfDialogVisible"
-      :title="currentPdf.title"
-      width="90%"
-      top="2vh"
-      destroy-on-close
-      class="pdf-dialog"
-    >
-      <div class="pdf-viewer" v-if="currentPdf.pdf_url">
+      <!-- 当前目录标题和描述 -->
+      <div class="catalog-header" v-if="currentCatalog">
+        <h3>{{ currentCatalog.title }}</h3>
+        <p v-if="currentCatalog.description" class="catalog-desc">{{ currentCatalog.description }}</p>
+      </div>
+
+      <!-- PDF内嵌展示 -->
+      <div class="pdf-viewer" v-if="currentCatalog">
         <vue-pdf-embed :source="pdfSource" />
       </div>
-    </el-dialog>
+    </div>
 
     <!-- 添加/编辑对话框 -->
     <el-dialog
@@ -111,6 +102,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Loading } from '@element-plus/icons-vue'
 import VuePdfEmbed from 'vue-pdf-embed'
 import { useAuthStore } from '@/store/auth'
+import { getServerBaseURL } from '@/utils/request'
 import { getCatalogs, createCatalog, updateCatalog, deleteCatalog } from '@/api/familyCatalog'
 
 const authStore = useAuthStore()
@@ -118,12 +110,10 @@ const authStore = useAuthStore()
 const loading = ref(false)
 const saving = ref(false)
 const catalogs = ref([])
-const pdfDialogVisible = ref(false)
+const currentCatalog = ref(null)
 const editDialogVisible = ref(false)
 const isEditing = ref(false)
 const uploadRef = ref(null)
-
-const currentPdf = ref({ title: '', pdf_url: '' })
 
 const editForm = ref({
   id: '',
@@ -134,10 +124,8 @@ const editForm = ref({
 
 // PDF源地址
 const pdfSource = computed(() => {
-  if (!currentPdf.value.pdf_url) return ''
-  // 使用后端API地址拼接
-  const baseUrl = window.location.origin
-  return baseUrl + currentPdf.value.pdf_url
+  if (!currentCatalog.value?.pdf_url) return ''
+  return getServerBaseURL() + currentCatalog.value.pdf_url
 })
 
 onMounted(() => {
@@ -150,6 +138,10 @@ async function fetchCatalogs() {
     const res = await getCatalogs()
     if (res.success) {
       catalogs.value = res.data
+      // 默认选中第一个
+      if (catalogs.value.length > 0) {
+        currentCatalog.value = catalogs.value[0]
+      }
     }
   } catch (error) {
     console.error('获取族谱目录失败:', error)
@@ -158,9 +150,8 @@ async function fetchCatalogs() {
   }
 }
 
-function viewPdf(item) {
-  currentPdf.value = item
-  pdfDialogVisible.value = true
+function switchCatalog(item) {
+  currentCatalog.value = item
 }
 
 function showAddDialog() {
@@ -170,6 +161,7 @@ function showAddDialog() {
 }
 
 function showEditDialog(item) {
+  if (!item) return
   isEditing.value = true
   editForm.value = {
     id: item.id,
@@ -219,6 +211,7 @@ async function handleSubmit() {
 }
 
 async function handleDelete(item) {
+  if (!item) return
   try {
     await ElMessageBox.confirm(`确定要删除"${item.title}"吗？`, '删除确认', {
       type: 'warning'
@@ -234,89 +227,94 @@ async function handleDelete(item) {
     // 用户取消
   }
 }
-
-function formatDate(dateStr) {
-  if (!dateStr) return ''
-  return dateStr.split('T')[0].split(' ')[0].substring(0, 10)
-}
 </script>
 
 <style scoped>
 .family-catalog-page {
   height: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
-.card-header {
+.catalog-toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
 .btn-text {
   margin-left: 4px;
 }
 
-.catalog-list {
+.empty-state {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.catalog-item {
-  display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 16px;
-  border: 1px solid #e4e7ed;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s;
+  justify-content: center;
+  padding: 60px 20px;
 }
 
-.catalog-item:hover {
-  border-color: #409eff;
-  background: #f5f7fa;
-}
-
-.catalog-icon {
-  flex-shrink: 0;
-}
-
-.catalog-info {
+.catalog-content {
   flex: 1;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
-.catalog-title {
-  font-size: 16px;
-  font-weight: bold;
+.catalog-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.catalog-tab {
+  padding: 6px 16px;
+  border: 1px solid #e4e7ed;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #606266;
+  transition: all 0.2s;
+  background: #fff;
+}
+
+.catalog-tab:hover {
+  border-color: #409eff;
+  color: #409eff;
+}
+
+.catalog-tab.active {
+  background: #409eff;
+  color: #fff;
+  border-color: #409eff;
+}
+
+.catalog-header {
+  margin-bottom: 12px;
+}
+
+.catalog-header h3 {
+  margin: 0;
+  font-size: 18px;
   color: #303133;
-  margin-bottom: 4px;
 }
 
 .catalog-desc {
-  font-size: 13px;
+  margin: 4px 0 0;
+  font-size: 14px;
   color: #606266;
-  margin-bottom: 4px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.catalog-meta {
-  font-size: 12px;
-  color: #909399;
-}
-
-.catalog-actions {
-  flex-shrink: 0;
-  display: flex;
-  gap: 8px;
 }
 
 .pdf-viewer {
-  height: 75vh;
+  flex: 1;
   overflow: auto;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  background: #fff;
+  padding: 8px;
+  min-height: 500px;
 }
 
 .upload-tip {
@@ -330,26 +328,16 @@ function formatDate(dateStr) {
     display: none;
   }
 
-  .catalog-item {
-    padding: 12px;
-    gap: 10px;
+  .catalog-toolbar {
+    margin-bottom: 8px;
   }
 
-  .catalog-icon {
-    display: none;
-  }
-
-  .catalog-title {
-    font-size: 15px;
-  }
-
-  .pdf-dialog :deep(.el-dialog) {
-    width: 95% !important;
-    margin-top: 1vh !important;
+  .catalog-header h3 {
+    font-size: 16px;
   }
 
   .pdf-viewer {
-    height: 80vh;
+    min-height: 400px;
   }
 }
 </style>
